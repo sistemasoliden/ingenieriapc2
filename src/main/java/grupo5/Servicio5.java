@@ -33,4 +33,3 @@ public class Servicio5 {
         return productos.stream().allMatch(p -> p.getCantidad() > 0);
     }
 }
-zz

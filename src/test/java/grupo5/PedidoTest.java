@@ -1,148 +1,103 @@
-package base;
+package grupo5;
 
+import base.Pedido;
 import modelo.Producto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-class PedidoTest {
+public class PedidoTest {
 
     private Pedido pedido;
-    private Producto laptop;
-    private Producto teclado;
 
     @BeforeEach
-    void setUp() {
+    void setup() {
         pedido = new Pedido();
-        // Usamos el constructor con 4 parámetros (sku, nombre, precio, cantidad)
-        laptop = new Producto("SKU1", "Laptop", 1500.0, 10);
-        teclado = new Producto("SKU2", "Teclado", 100.0, 20);
-    }
-
-    // ================================
-    // PRUEBAS PARA agregarProducto(...)
-    // ================================
-
-    @Test
-    void agregarProducto_conDatosValidos_debeAgregarYRetornarTrue() {
-        boolean resultado = pedido.agregarProducto(laptop, 5);
-
-        assertTrue(resultado);
-        List<Producto> detalles = pedido.getDetallesPedido();
-        assertEquals(1, detalles.size());
-        Producto agregado = detalles.get(0);
-
-        assertEquals("Laptop", agregado.getNombre());
-        assertEquals(5, agregado.getCantidad());
-        assertEquals(laptop.getPrecio(), agregado.getPrecio());
     }
 
     @Test
-    void agregarProducto_conCantidadCero_debeRetornarFalseYNoAgregar() {
-        boolean resultado = pedido.agregarProducto(laptop, 0);
-
-        assertFalse(resultado);
-        assertTrue(pedido.getDetallesPedido().isEmpty());
+    void testAgregarProductoCantidadNoValida() {
+        Producto p = new Producto("Laptop", 1200.0, 10, "SKU1", "Tecnologia", true, false);
+        boolean r = pedido.agregarProducto(p, 0);
+        assertFalse(r);
     }
 
     @Test
-    void agregarProducto_conCantidadNegativa_debeRetornarFalseYNoAgregar() {
-        boolean resultado = pedido.agregarProducto(laptop, -3);
-
-        assertFalse(resultado);
-        assertTrue(pedido.getDetallesPedido().isEmpty());
-    }
-
-    @Test
-    void agregarProducto_productoDuplicadoPorNombre_debeRetornarFalseYNoDuplicar() {
-        // Primer agregado correcto
-        boolean primero = pedido.agregarProducto(laptop, 3);
-        assertTrue(primero);
-        assertEquals(1, pedido.getDetallesPedido().size());
-
-        // Segundo producto con MISMO nombre pero distinto sku
-        Producto otroLaptop = new Producto("SKU-OTRO", "Laptop", 2000.0, 5);
-        boolean segundo = pedido.agregarProducto(otroLaptop, 2);
-
-        assertFalse(segundo);
-        // Debe seguir habiendo solo 1 producto en la lista
-        assertEquals(1, pedido.getDetallesPedido().size());
-    }
-
-    @Test
-    void agregarProducto_dosProductosConNombreDistinto_debeAgregarAmbos() {
-        boolean r1 = pedido.agregarProducto(laptop, 3);
-        boolean r2 = pedido.agregarProducto(teclado, 2);
-
+    void testAgregarProductoDuplicadoSku() {
+        Producto p = new Producto("Mouse", 20.0, 5, "SKU2", "Accesorios", true, false);
+        boolean r1 = pedido.agregarProducto(p, 2);
+        boolean r2 = pedido.agregarProducto(p, 3);
         assertTrue(r1);
-        assertTrue(r2);
-        assertEquals(2, pedido.getDetallesPedido().size());
-    }
-
-    // ================================
-    // PRUEBAS PARA validarStock(...)
-    // ================================
-
-    @Test
-    void validarStock_conListaVacia_debeRetornarTrue() {
-        // No hay productos en el pedido
-        boolean valido = pedido.validarStock(null);
-
-        assertTrue(valido);
+        assertFalse(r2);
+        assertEquals(1, pedido.getDetallesPedido().size());
     }
 
     @Test
-    void validarStock_todosProductosConCantidadPositiva_debeRetornarTrue() {
-        pedido.agregarProducto(laptop, 5);
-        pedido.agregarProducto(teclado, 3);
-
-        boolean valido = pedido.validarStock(null);
-
-        assertTrue(valido);
+    void testAgregarProductoCorrecto() {
+        Producto p = new Producto("Teclado", 50.0, 5, "SKU3", "Accesorios", true, false);
+        boolean r = pedido.agregarProducto(p, 4);
+        assertTrue(r);
+        assertEquals(1, pedido.getDetallesPedido().size());
     }
 
     @Test
-    void validarStock_unProductoConCantidadCero_debeRetornarFalse() {
-        // Agregamos directamente un producto con cantidad 0 a la lista interna
-        pedido.getDetallesPedido().add(
-                new Producto("SKU3", "Mouse", 50.0, 0)
-        );
-
-        boolean valido = pedido.validarStock(null);
-
-        assertFalse(valido);
+    void testAgregarProductoRespetaAtributos() {
+        Producto p = new Producto("Monitor", 800.0, 10, "SKU4", "Tecnologia", true, true);
+        pedido.agregarProducto(p, 3);
+        Producto agregado = pedido.getDetallesPedido().get(0);
+        assertEquals("Monitor", agregado.getNombre());
+        assertEquals(800.0, agregado.getPrecio());
+        assertEquals("SKU4", agregado.getSku());
+        assertEquals("Tecnologia", agregado.getCategoria());
+        assertTrue(agregado.isEsActivo());
+        assertTrue(agregado.isDescuentoAplicable());
+        assertEquals(3, agregado.getCantidad());
     }
 
     @Test
-    void validarStock_mezclaDeCantidadPositivaYCero_debeRetornarFalse() {
-        // Uno válido
-        pedido.getDetallesPedido().add(
-                new Producto("SKU3", "Mouse", 50.0, 5)
-        );
-        // Uno con cantidad 0
-        pedido.getDetallesPedido().add(
-                new Producto("SKU4", "Pad Mouse", 20.0, 0)
-        );
-
-        boolean valido = pedido.validarStock(null);
-
-        assertFalse(valido);
+    void testAgregarProductoInactivo() {
+        Producto p = new Producto("Tablet", 600.0, 5, "SKU5", "Tecnologia", false, false);
+        boolean r = pedido.agregarProducto(p, 2);
+        assertFalse(r);
     }
 
     @Test
-    void validarStock_despuesDeCambiarCantidadA0ConSetter_debeRetornarFalse() {
-        // Agregamos por el método normal
-        pedido.agregarProducto(laptop, 5);
-        assertTrue(pedido.validarStock(null)); // primero es válido
+    void testValidarStockListaVacia() {
+        assertTrue(pedido.validarStock());
+    }
 
-        // Luego, por alguna razón, la cantidad se vuelve 0
-        pedido.getDetallesPedido().get(0).setCantidad(0);
+    @Test
+    void testValidarStockTodosValidos() {
+        Producto p1 = new Producto("Prod1", 10.0, 5, "S1", "A", true, false);
+        Producto p2 = new Producto("Prod2", 20.0, 3, "S2", "B", true, false);
+        pedido.agregarProducto(p1, 5);
+        pedido.agregarProducto(p2, 3);
+        assertTrue(pedido.validarStock());
+    }
 
-        boolean valido = pedido.validarStock(null);
+    @Test
+    void testValidarStockUnoCero() {
+        Producto p = new Producto("Prod3", 10.0, 0, "S3", "A", true, false);
 
-        assertFalse(valido);
+        // Se agrega manualmente porque agregarProducto NO permite cantidad 0
+        pedido.getDetallesPedido().add(p);
+
+        assertFalse(pedido.validarStock());
+    }
+
+    @Test
+    void testValidarStockCantidadNegativa() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new Producto("Prod4", 10.0, -2, "S4", "A", true, false));
+    }
+
+    @Test
+    void testValidarStockValoresLimite() {
+        Producto p1 = new Producto("Prod5", 10.0, 1, "S5", "A", true, false);
+        Producto p2 = new Producto("Prod6", 10.0, 999, "S6", "A", true, false);
+        pedido.agregarProducto(p1, 1);
+        pedido.agregarProducto(p2, 999);
+        assertTrue(pedido.validarStock());
     }
 }
